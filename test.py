@@ -1,5 +1,3 @@
-print("Start")
-print("pero")
-
 import sys
-print(sys.version)
+print("----- Python ver." + sys.version)
+
