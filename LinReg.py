@@ -32,7 +32,6 @@ print(df.describe())
 print("\n ########### Corelations ##########")
 print(df.corr())
 
-
 #df['TRK_HMI_STS_DB\DATA.TRK_WS_EN1_COIL_DIAM'].plot(logy=True)
 #sns.heatmap(df.corr(), annot=True)
 #plt.show()
