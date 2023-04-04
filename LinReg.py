@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression
 
 print("----- Python ver." + sys.version)
 
-df = pd.read_csv("DVL2_DATASET_MIN_2023-04-03.csv", sep=';', encoding='utf-8')
+df = pd.read_csv("GitTest\DVL2_DATASET_MIN_2023-04-03.csv", sep=';', encoding='utf-8')
 df['time'] = pd.to_datetime(df['time']) #first df column (time) was initially interpreted as object type
 df.set_index('time', inplace=True) #time column used as index
 
