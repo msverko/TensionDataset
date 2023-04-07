@@ -8,11 +8,64 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from scipy import stats
 from sklearn.preprocessing import MinMaxScaler
+from scipy.stats import shapiro
+from scipy.stats import anderson
+
+df = pd.read_csv(r"GitTest\DVL2_DATASET_MIN_FULL_2023-04-06.csv", sep=';', encoding='utf-8')
+df['Time'] = pd.to_datetime(df['Time']) #first df column (Time) was initially interpreted as object type
+df.set_index('Time', inplace=True) #time column used as index
 
 
-df = pd.read_csv("GitTest\DVL2_DATASET_MIN_2023-04-03.csv", sep=';', encoding='utf-8')
-df['time'] = pd.to_datetime(df['time']) #first df column (time) was initially interpreted as object type
-df.set_index('time', inplace=True) #time column used as index
+print("\n ########### Dataframe info ##########")
+dfinfo = df.info(verbose=True, show_counts=True)
+
+print("\n ########### Describe dataframe ##########")
+summary_stats = df.describe()
+summary_stats.to_csv('df_summary.csv')
+print(summary_stats)
+
+
+# --------- Plot some of the variables - START
+vars_to_plot = ['68_0', '68_4', '60_69', '60_69', '69_10', '69_36', '69_49', '69_62', '69_75', '69_88', '69_101']
+ax = df[vars_to_plot].plot(figsize=(16,7))
+ax.set_title('Speed mode in relation to Coil diameters')
+ax.set_xlabel('Time')
+ax.set_ylabel('Value [%]')
+ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
+plt.subplots_adjust(right=0.8)
+plt.show()
+
+
+
+'''
+# normalize the dataframe excluding the index column
+df_no_index = df.reset_index(drop=True)
+scaler = MinMaxScaler()
+scaled_values = scaler.fit_transform(df_no_index)
+df_normalized = pd.DataFrame(scaled_values, columns=df_no_index.columns)
+# merge the index column back onto the normalized dataframe
+df_normalized['time'] = df.index
+df_normalized.set_index('time', inplace=True)
+'''
+
+test_results = pd.DataFrame(columns=['Column', 'Statistic', 'p-value'])
+# loop through columns and perform Shapiro-Wilk test on each column
+for column in df.columns:
+    stat, p = shapiro(df[column])
+    test_results = test_results.append({'Column': column, 'Statistic': stat, 'p-value': p}, ignore_index=True)
+test_results.to_csv(r'GitTest\Normality_test_results_Saphiro.csv', index=False)
+
+test_results = pd.DataFrame(columns=['Column', 'Statistic', 'Critical Values', 'Significance Levels'])
+# loop through columns and perform Anderson-Darling test on each column
+for column in df.columns:
+    result = anderson(df[column])
+    test_results = test_results.append({'Column': column, 'Statistic': result.statistic,
+                                        'Critical Values': result.critical_values,
+                                        'Significance Levels': result.significance_level},
+                                        ignore_index=True)
+test_results.to_csv(r'GitTest\Normality_tesr_results_Anderson.csv', index=False)
+
+
 
 # Calculate statistics for each column
 stats = df.describe(percentiles=[0.25, 0.5, 0.75])
@@ -23,6 +76,7 @@ p25s = stats.loc['25%']
 p50s = stats.loc['50%']
 p75s = stats.loc['75%']
 
+# --------- Distribution with marked statistics for every variable in df ploted in 3x4 grid - START
 #Number of plots created
 plot_count = 0
 
@@ -37,7 +91,7 @@ for i, col in enumerate(df.columns):
         axes = axes.flatten()
         plot_count = 0
     
-    # Plot the distribution
+    # Plot the distribution - START
     df[col].hist(ax=axes[plot_count], bins=20)
     axes[plot_count].set_title(col)
     axes[plot_count].axvline(means[i], color='red', linestyle='dashed', linewidth=2, label='Mean')
@@ -65,3 +119,25 @@ for i, col in enumerate(df.columns):
     if plot_count == 12 or i == len(df.columns) - 1:
         plt.tight_layout()
         plt.show()
+# --------- Distribution with marked statistics for every variable in df ploted in 3x4 grid - END
+
+# --------- Boxplot(normalized dataframe) - START
+sns.boxplot(data=df)
+plt.xticks(rotation=90)
+ax = plt.gca()  # Get the current Axes instance
+plt.subplots_adjust(bottom=0.31, top=0.95)  # Adjust the bottom margin
+plt.show()
+# --------- Boxplot - END
+
+# --------- Heatmap - START
+corr_matrix = df.corr()
+sns.set(font_scale=0.6)
+fig, ax = plt.subplots(figsize=(12, 10))
+sns.heatmap(corr_matrix, cmap='coolwarm', annot=False, fmt='.05f', ax=ax)
+plt.yticks(rotation=0)
+fig.tight_layout(rect=[0, 0.1, 1, 0.9]) # Heatmap position
+plt.show()
+# --------- Heatmap - END
+
+
+
